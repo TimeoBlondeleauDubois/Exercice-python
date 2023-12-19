@@ -1,9 +1,9 @@
 import random
-import time
 import sys
+import time
 
 hp_du_perso_max = 1000
-hp_du_perso = 1000
+hp_du_perso = 751
 atk = 100
 magie = 100
 lvl = 0
@@ -12,12 +12,15 @@ perdu = 0
 message = 0
 messages = 0
 augmenter = 0
-gold = 0
+gold = 20
 fuite_unlock = 0
 fuite = 0
 choix = 0
 choice = ""
 skip_turn = 0
+choix_shop = 0
+potion_de_soin = 3
+invalides = 0 
 
 def level():
   global lvl
@@ -84,7 +87,7 @@ def augmenter_les_stats():
 
 def reset_stats():
     return [
-        {"nom": "Acheron", "hp": 2000, "atk": 75, "xp": 100, "gold": 10},
+        {"nom": "Acheron", "hp": 1600, "atk": 75, "xp": 100, "gold": 10},
         {"nom": "Bloodlust", "hp": 800, "atk": 60, "xp": 80, "gold": 8},
         {"nom": "Kenos", "hp": 1300, "atk": 50, "xp": 85, "gold": 8.5},
         {"nom": "Arcturus", "hp": 1690, "atk": 69, "xp": 90, "gold": 9},
@@ -93,8 +96,28 @@ def reset_stats():
         {"nom": "Abyss Of Darkness", "hp": 3000, "atk": 60, "xp": 9.5, "gold": 95}
     ]
 
-def inventaire():
-    return {"potion_soin": 0}
+def shop():
+  global gold
+  global choix_shop
+  global potion_de_soin
+  print("vous avez", gold, "d'or, voulez vous acheter quelque chose?\n")
+  print("0: rien je m'en vais")
+  print("1: acheter une potion de soin (10 d'or)")
+  choix_shop = input("choix: ")
+  if choix_shop == "0":
+      print("\nvous êtes parti\n")
+  elif choix_shop == "1":
+      if gold >= 10:
+          gold = gold - 10
+          potion_de_soin += 1
+          print("vous avez maintenant", potion_de_soin, "potions de soin\n")
+          shop()
+      else:
+          print("\nvous n'avez pas assez d'argent\n")
+          shop()
+  else:
+      print("\ndonnée incorrecte, veuillez recommencer\n")
+      shop()
   
 
 def faire_combat():
@@ -108,6 +131,8 @@ def faire_combat():
   global fuite
   global fuite_unlock
   global skip_turn
+  global potion_de_soin
+  global invalides
   monstre_actuel = None 
   fuite = 0
   while hp_du_perso > 0:
@@ -120,7 +145,7 @@ def faire_combat():
       print("Ses points de vie:", monstre_actuel["hp"], "pv")
       print("\n1: Attaquer - Votre attaque =", atk, "d'attaque")
       print("2: Magie - Votre magie =", magie, "de magie")
-      print("3: Potion de soin - (restaure 20% de santé totale), vous en avez", inventaire()["potion_soin"], "en votre possession")
+      print("3: Potion de soin - (restaure 20% de santé totale), vous en avez", potion_de_soin , "en votre possession")
       if fuite_unlock == 1:
         print("4: Fuir - Vous fuyez")
 
@@ -133,12 +158,13 @@ def faire_combat():
       elif choix == "2":
           print("\nVous lancez un sort de magie")
       elif choix == "3":
-        if inventaire()["potion_soin"] > 0:
+        if potion_de_soin > 0:
           hp_du_perso += hp_du_perso_max * 0.2
           if hp_du_perso > hp_du_perso_max:
               hp_du_perso = hp_du_perso_max
           print("\nVous avez restauré 10% de votre vie, il vous reste", hp_du_perso)
           print("/", hp_du_perso_max, "pv")
+          potion_de_soin -= 1
         else:
           print("\nVous n'avez plus de potions de soin.\n")
           skip_turn = 1
@@ -153,9 +179,9 @@ def faire_combat():
       if fuite == 1:
         break
       if monstre_actuel["hp"] <= 0:
-          if hp_du_perso <= 0:
-              print("\nVous avez perdu")
-              perdu = 1
+          if hp_du_perso<= 0:
+              print("\nMais vous êtes mort aussi.")
+              sys.exit()
           else:
               print("\nVous avez gagné")
               xp += monstre_actuel["xp"]
@@ -171,11 +197,29 @@ def faire_combat():
         print("Il vous a infligé", monstre_actuel["atk"], "de dégâts")
 
       if hp_du_perso <= 0:
-          print("\nVous avez perdu")
-          perdu = 1
-          break
+          print("\nVous avez perdu, adieu")
+          sys.exit()
   level()
-  hp_du_perso = hp_du_perso_max
+  if perdu == 0:
+    hp_du_perso = hp_du_perso + (hp_du_perso_max / 2)
+    if hp_du_perso > hp_du_perso_max:
+      hp_du_perso = hp_du_perso_max
+    print("vous avez ", hp_du_perso , "pv")
+    while invalides == 0:
+      print("\nVoulez vous aller dans le shop?")
+      print("1: Oui\n2: Non")
+      shop_choice = input("Choix: ")
+      if shop_choice == "1":
+        invalides = 1
+        shop()
+      elif shop_choice == "2":
+        print("Vous n'êtes pas venu au shop")
+        invalides = 1
+      else:
+        print ("donée invalide")
+        invalides = 0
+        continue
+    
   return hp_du_perso, atk, magie, xp, hp_du_perso_max, gold
 
 def afficher_texte_progressif(texte):
@@ -250,3 +294,4 @@ def histoire():
     elif choice == 'N':
       choix = 1
 faire_combat()
+histoire()
