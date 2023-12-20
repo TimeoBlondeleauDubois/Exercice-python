@@ -295,3 +295,4 @@ def histoire():
       choix = 1
 
 histoire()
+print("test")
